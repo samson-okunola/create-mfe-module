@@ -1,0 +1,23 @@
+function Home() {
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <h1 className="text-2xl font-bold text-gray-900 mb-4">
+        <%= name %> Module
+      </h1>
+      <p className="text-gray-600 mb-4">
+        Welcome to the <%= name %> module. This is your starting point for building
+        your micro frontend feature.
+      </p>
+      <div className="bg-gray-50 rounded p-4">
+        <h2 className="text-lg font-semibold text-gray-800 mb-2">Getting Started</h2>
+        <ul className="list-disc list-inside text-gray-600 space-y-1">
+          <li>Edit <code className="bg-gray-200 px-1 rounded">src/Module.tsx</code> to add routes</li>
+          <li>Add new pages in <code className="bg-gray-200 px-1 rounded">src/pages/</code></li>
+          <li>This module exposes <code className="bg-gray-200 px-1 rounded">./Module</code> via Module Federation</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+export default Home;

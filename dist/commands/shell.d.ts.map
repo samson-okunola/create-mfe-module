@@ -1,0 +1,1 @@
+{"version":3,"file":"shell.d.ts","sourceRoot":"","sources":["../../src/commands/shell.ts"],"names":[],"mappings":"AAMA,UAAU,YAAY;IACpB,IAAI,EAAE,MAAM,CAAA;IACZ,YAAY,EAAE,MAAM,CAAA;IACpB,IAAI,EAAE,MAAM,CAAA;CACb;AAED,eAAO,MAAM,aAAa,GAAU,8BAA8B,YAAY,kBAoB7E,CAAA"}

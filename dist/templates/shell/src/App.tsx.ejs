@@ -1,0 +1,177 @@
+import { Suspense, lazy, useEffect, useState } from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
+
+interface ModuleConfig {
+  url: string;
+  entry: string;
+}
+
+interface RegistryData {
+  shells: {
+    [shellName: string]: {
+      port: number;
+      modules: {
+        [moduleName: string]: ModuleConfig;
+      };
+    };
+  };
+}
+
+const SHELL_NAME = '<%= name %>';
+const REGISTRY_PATH = import.meta.env.VITE_REGISTRY_PATH || './mfe-registry.json';
+
+function loadRemoteModule(moduleName: string, url: string) {
+  return lazy(async () => {
+    const container = await import(/* @vite-ignore */ `${url}/assets/remoteEntry.js`);
+    await container.init({
+      react: {
+        get: () => import('react'),
+        loaded: true,
+      },
+      'react-dom': {
+        get: () => import('react-dom'),
+        loaded: true,
+      },
+      'react-router-dom': {
+        get: () => import('react-router-dom'),
+        loaded: true,
+      },
+    });
+    const factory = await container.get('./Module');
+    return { default: factory() };
+  });
+}
+
+function App() {
+  const [modules, setModules] = useState<Record<string, React.LazyExoticComponent<React.ComponentType>>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadRegistry() {
+      try {
+        const response = await fetch(REGISTRY_PATH);
+        if (!response.ok) {
+          console.warn('Registry not found, running without modules');
+          setLoading(false);
+          return;
+        }
+
+        const registry: RegistryData = await response.json();
+        const shellConfig = registry.shells[SHELL_NAME];
+
+        if (!shellConfig) {
+          console.warn(`Shell "${SHELL_NAME}" not found in registry`);
+          setLoading(false);
+          return;
+        }
+
+        const loadedModules: Record<string, React.LazyExoticComponent<React.ComponentType>> = {};
+
+        for (const [moduleName, config] of Object.entries(shellConfig.modules)) {
+          loadedModules[moduleName] = loadRemoteModule(moduleName, config.url);
+        }
+
+        setModules(loadedModules);
+        setLoading(false);
+      } catch (err) {
+        console.error('Failed to load registry:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load modules');
+        setLoading(false);
+      }
+    }
+
+    loadRegistry();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-xl text-gray-600">Loading modules...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-xl text-red-600">Error: {error}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center">
+                <span className="text-xl font-bold text-gray-900"><%= name %></span>
+              </div>
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <Link
+                  to="/"
+                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
+                  Home
+                </Link>
+                {Object.keys(modules).map((moduleName) => (
+                  <Link
+                    key={moduleName}
+                    to={`/${moduleName}`}
+                    className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  >
+                    {moduleName.charAt(0).toUpperCase() + moduleName.slice(1)}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center py-12">
+              <div className="text-gray-600">Loading module...</div>
+            </div>
+          }
+        >
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <div className="px-4 py-6 sm:px-0">
+                  <div className="border-4 border-dashed border-gray-200 rounded-lg p-8 text-center">
+                    <h1 className="text-2xl font-bold text-gray-900 mb-4">
+                      Welcome to <%= name %>
+                    </h1>
+                    <p className="text-gray-600 mb-4">
+                      This is your MFE shell. Navigate to modules using the links above.
+                    </p>
+                    {Object.keys(modules).length === 0 && (
+                      <p className="text-gray-500 text-sm">
+                        No modules loaded. Add modules using: npx create-mfe-module --module &lt;name&gt; --shell-target <%= name %>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              }
+            />
+            {Object.entries(modules).map(([moduleName, ModuleComponent]) => (
+              <Route
+                key={moduleName}
+                path={`/${moduleName}/*`}
+                element={<ModuleComponent />}
+              />
+            ))}
+          </Routes>
+        </Suspense>
+      </main>
+    </div>
+  );
+}
+
+export default App;
