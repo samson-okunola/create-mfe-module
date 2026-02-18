@@ -12,13 +12,13 @@ CLI tool to scaffold Micro Frontend (MFE) shells and modules using Vite, React, 
 ## Installation
 
 ```bash
-npm install -g @pablo-clueless/create-mfe-module
+npm install -g create-mfe-module
 ```
 
 Or use directly with npx:
 
 ```bash
-npx @pablo-clueless/create-mfe-module --shell myapp --registry-repo ./registry
+npx create-mfe-module --shell myapp --registry-repo ./registry
 ```
 
 ## Usage
