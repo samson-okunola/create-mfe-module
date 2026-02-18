@@ -11,14 +11,45 @@ CLI tool to scaffold Micro Frontend (MFE) shells and modules using Vite, React, 
 
 ## Installation
 
+This package is hosted on GitHub Packages and requires authentication.
+
+### Step 1: Create a GitHub Personal Access Token
+
+1. Go to [GitHub Settings > Developer settings > Personal access tokens > Tokens (classic)](https://github.com/settings/tokens)
+2. Click "Generate new token (classic)"
+3. Select the `read:packages` scope
+4. Copy the generated token
+
+### Step 2: Authenticate with GitHub Packages
+
+Create or edit `~/.npmrc` (in your home directory) and add:
+
+```
+//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
+@pablo-clueless:registry=https://npm.pkg.github.com
+```
+
+Replace `YOUR_GITHUB_TOKEN` with your personal access token.
+
+Alternatively, login via npm:
+
 ```bash
-npm install -g create-mfe-module
+npm login --registry=https://npm.pkg.github.com --scope=@pablo-clueless
+# Username: your-github-username
+# Password: your-personal-access-token
+# Email: your-email
+```
+
+### Step 3: Install the Package
+
+```bash
+npm install -g @pablo-clueless/create-mfe-module
 ```
 
 Or use directly with npx:
 
 ```bash
-npx create-mfe-module --shell myapp --registry-repo ./registry
+npx @pablo-clueless/create-mfe-module --shell myapp --registry-repo ./registry
 ```
 
 ## Usage
@@ -26,13 +57,13 @@ npx create-mfe-module --shell myapp --registry-repo ./registry
 ### Create a Shell (Host Application)
 
 ```bash
-npx create-mfe-module --shell <name> --registry-repo <path> [--port <number>]
+npx @pablo-clueless/create-mfe-module --shell <name> --registry-repo <path> [--port <number>]
 ```
 
 **Example:**
 
 ```bash
-npx create-mfe-module --shell converge --registry-repo ./registry --port 3000
+npx @pablo-clueless/create-mfe-module --shell converge --registry-repo ./registry --port 3000
 ```
 
 This creates:
@@ -44,13 +75,13 @@ This creates:
 ### Create a Module (Remote Application)
 
 ```bash
-npx create-mfe-module --module <name> --shell-target <shell> --registry-repo <path> [--port <number>]
+npx @pablo-clueless/create-mfe-module --module <name> --shell-target <shell> --registry-repo <path> [--port <number>]
 ```
 
 **Example:**
 
 ```bash
-npx create-mfe-module --module finance --shell-target converge --registry-repo ./registry --port 3001
+npx @pablo-clueless/create-mfe-module --module finance --shell-target converge --registry-repo ./registry --port 3001
 ```
 
 This creates:
@@ -73,7 +104,7 @@ You can also set the registry via environment variable:
 
 ```bash
 export MFE_REGISTRY_REPO=./registry
-npx create-mfe-module --shell myapp
+npx @pablo-clueless/create-mfe-module --shell myapp
 ```
 
 ## Registry
@@ -106,7 +137,7 @@ The registry is a JSON file (`mfe-registry.json`) that tracks all shells and the
 For local development, use a local path:
 
 ```bash
-npx create-mfe-module --shell myapp --registry-repo ./registry
+npx @pablo-clueless/create-mfe-module --shell myapp --registry-repo ./registry
 ```
 
 ### Remote Registry (Git)
@@ -114,7 +145,7 @@ npx create-mfe-module --shell myapp --registry-repo ./registry
 For team collaboration, use a Git repository:
 
 ```bash
-npx create-mfe-module --shell myapp --registry-repo https://github.com/your-org/mfe-registry.git
+npx @pablo-clueless/create-mfe-module --shell myapp --registry-repo https://github.com/your-org/mfe-registry.git
 ```
 
 The CLI will clone/pull the repo, update the registry, and push changes.

@@ -1,5 +1,5 @@
 {
-  "name": "create-mfe-module",
+  "name": "@pablo-clueless/create-mfe-module",
   "version": "1.0.0",
   "description": "CLI tool to scaffold MFE shells and modules with Vite + React + Module Federation",
   "main": "dist/index.js",
@@ -11,8 +11,7 @@
     "url": "git+https://github.com/pablo-clueless/create-mfe-module.git"
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org",
-    "access": "public"
+    "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
     "build": "tsc && npm run copy-templates",
