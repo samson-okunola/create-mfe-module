@@ -6,7 +6,11 @@
       "Bash(sort:*)",
       "Bash(npm install:*)",
       "Bash(npm run build:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(git status:*)",
+      "Bash(git tag:*)",
+      "Bash(git push:*)",
+      "Bash(gh release create v1.0.0 --title \"v1.0.0\" --notes \"$\\(cat <<''EOF''\n## Initial Release\n\nCLI tool to scaffold Micro Frontend \\(MFE\\) shells and modules.\n\n### Features\n- Create MFE shells \\(Module Federation host\\)\n- Create MFE modules \\(Module Federation remote\\)\n- Registry-based module discovery\n- Vite + React + Tailwind CSS\n- React Router support\n- TypeScript\n\n### Usage\n\n```bash\n# Create a shell\nnpx @pablo-clueless/create-mfe-module --shell myapp --registry-repo ./registry\n\n# Create a module\nnpx @pablo-clueless/create-mfe-module --module finance --shell-target myapp --registry-repo ./registry --port 3001\n```\nEOF\n\\)\")"
     ]
   }
 }
