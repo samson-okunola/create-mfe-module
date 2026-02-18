@@ -1,7 +1,8 @@
 import pc from 'picocolors'
 import path from 'path'
+import fs from 'fs-extra'
 
-import { registerShell } from '../registry/index.js'
+import { registerShell, getRegistryLocalPath } from '../registry/index.js'
 import { renderDir } from '../utils/scaffold.js'
 
 interface ShellOptions {
@@ -20,7 +21,13 @@ export const scaffoldShell = async ({ name, registryRepo, port }: ShellOptions) 
     console.log(pc.green(`Files created at ./${name}`))
 
     await registerShell(registryRepo, name, port)
-    console.log(pc.green(`Shell "${name}" registered in mfe-registry\n`))
+    console.log(pc.green(`Shell "${name}" registered in mfe-registry`))
+
+    // Copy registry to shell's public folder
+    const registryPath = path.join(getRegistryLocalPath(registryRepo), 'mfe-registry.json')
+    const shellPublicRegistry = path.join(destDir, 'public', 'mfe-registry.json')
+    await fs.copy(registryPath, shellPublicRegistry)
+    console.log(pc.green(`Registry copied to ${name}/public/mfe-registry.json\n`))
 
     console.log(pc.dim('Next steps:'))
     console.log(pc.dim(`  cd ${name}`))
