@@ -1,15 +1,14 @@
 import pc from 'picocolors';
 import path from 'path';
-import { registerShell } from '../registry/index.js';
 import { renderDir } from '../utils/scaffold.js';
-export const scaffoldShell = async ({ name, registryRepo, port }) => {
+export const scaffoldShell = async ({ name, port }) => {
     const destDir = path.resolve(process.cwd(), name);
     console.log(pc.cyan(`\nScaffolding shell: ${pc.bold(name)}\n`));
     try {
         await renderDir('shell', destDir, { name, port });
         console.log(pc.green(`Files created at ./${name}`));
-        await registerShell(registryRepo, name, port);
-        console.log(pc.green(`Shell "${name}" registered in mfe-registry\n`));
+        console.log(pc.green(`\nImport map created at ${name}/public/import-map.json`));
+        console.log(pc.dim('Add module entries to it when you create new modules.\n'));
         console.log(pc.dim('Next steps:'));
         console.log(pc.dim(`  cd ${name}`));
         console.log(pc.dim('  pnpm install'));

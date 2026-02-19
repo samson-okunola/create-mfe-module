@@ -1,6 +1,6 @@
+import { fileURLToPath } from 'url';
 import fs from 'fs-extra';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import ejs from 'ejs';
 
 const __filename = fileURLToPath(import.meta.url);

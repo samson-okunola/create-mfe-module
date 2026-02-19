@@ -1,28 +1,44 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Suspense, lazy, useEffect, useState, Component } from 'react';
+import type { ReactNode } from 'react';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
 
-interface ModuleConfig {
-  url: string;
-  entry: string;
+interface ImportMap {
+  imports: Record<string, string>;
 }
 
-interface RegistryData {
-  shells: {
-    [shellName: string]: {
-      port: number;
-      modules: {
-        [moduleName: string]: ModuleConfig;
-      };
-    };
-  };
+const IMPORT_MAP_PATH = './import-map.json';
+
+class ModuleErrorBoundary extends Component<
+  { children: ReactNode; moduleName: string },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode; moduleName: string }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-6 bg-red-50 rounded-lg border border-red-200">
+          <h2 className="text-lg font-semibold text-red-800">
+            Failed to load module: {this.props.moduleName}
+          </h2>
+          <p className="text-red-600 mt-2">{this.state.error?.message}</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
-const SHELL_NAME = '<%= name %>';
-const REGISTRY_PATH = import.meta.env.VITE_REGISTRY_PATH || './mfe-registry.json';
-
-function loadRemoteModule(moduleName: string, url: string) {
+function loadRemoteModule(url: string) {
   return lazy(async () => {
-    const container = await import(/* @vite-ignore */ `${url}/assets/remoteEntry.js`);
+    const container = await import(/* @vite-ignore */ url);
     await container.init({
       react: {
         get: () => import('react'),
@@ -46,42 +62,35 @@ function App() {
   const [modules, setModules] = useState<Record<string, React.LazyExoticComponent<React.ComponentType>>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const location = useLocation();
 
   useEffect(() => {
-    async function loadRegistry() {
+    async function loadModules() {
       try {
-        const response = await fetch(REGISTRY_PATH);
+        const response = await fetch(IMPORT_MAP_PATH);
         if (!response.ok) {
-          console.warn('Registry not found, running without modules');
+          console.warn('Import map not found, running without modules');
           setLoading(false);
           return;
         }
 
-        const registry: RegistryData = await response.json();
-        const shellConfig = registry.shells[SHELL_NAME];
-
-        if (!shellConfig) {
-          console.warn(`Shell "${SHELL_NAME}" not found in registry`);
-          setLoading(false);
-          return;
-        }
-
+        const importMap: ImportMap = await response.json();
         const loadedModules: Record<string, React.LazyExoticComponent<React.ComponentType>> = {};
 
-        for (const [moduleName, config] of Object.entries(shellConfig.modules)) {
-          loadedModules[moduleName] = loadRemoteModule(moduleName, config.url);
+        for (const [moduleName, url] of Object.entries(importMap.imports)) {
+          loadedModules[moduleName] = loadRemoteModule(url);
         }
 
         setModules(loadedModules);
         setLoading(false);
       } catch (err) {
-        console.error('Failed to load registry:', err);
+        console.error('Failed to load import map:', err);
         setError(err instanceof Error ? err.message : 'Failed to load modules');
         setLoading(false);
       }
     }
 
-    loadRegistry();
+    loadModules();
   }, []);
 
   if (loading) {
@@ -100,6 +109,8 @@ function App() {
     );
   }
 
+  const currentModule = location.pathname.split('/')[1] || '';
+
   return (
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-white shadow-sm">
@@ -112,7 +123,11 @@ function App() {
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                 <Link
                   to="/"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    currentModule === ''
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  }`}
                 >
                   Home
                 </Link>
@@ -120,7 +135,11 @@ function App() {
                   <Link
                     key={moduleName}
                     to={`/${moduleName}`}
-                    className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                      currentModule === moduleName
+                        ? 'border-blue-500 text-gray-900'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    }`}
                   >
                     {moduleName.charAt(0).toUpperCase() + moduleName.slice(1)}
                   </Link>
@@ -153,7 +172,9 @@ function App() {
                     </p>
                     {Object.keys(modules).length === 0 && (
                       <p className="text-gray-500 text-sm">
-                        No modules loaded. Add modules using: npx create-mfe-module --module &lt;name&gt; --shell-target <%= name %>
+                        No modules loaded. Add module entries to{' '}
+                        <code className="bg-gray-200 px-1 rounded">public/import-map.json</code>{' '}
+                        to get started.
                       </p>
                     )}
                   </div>
@@ -164,7 +185,11 @@ function App() {
               <Route
                 key={moduleName}
                 path={`/${moduleName}/*`}
-                element={<ModuleComponent />}
+                element={
+                  <ModuleErrorBoundary moduleName={moduleName}>
+                    <ModuleComponent />
+                  </ModuleErrorBoundary>
+                }
               />
             ))}
           </Routes>
